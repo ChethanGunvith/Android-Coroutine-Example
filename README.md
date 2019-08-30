@@ -1,8 +1,3 @@
-Coding Assignment :
-------------------------
-
-This sample project demonstrate capability of visualizing csv file on the screen. it parse it's content on background thread
-
 Building
 You can open the project in Android studio and press run.
 
@@ -20,9 +15,3 @@ Libraries
 
 
  Please find below links here where I have provided more insights of all the latest Android Architectural Components,
-
- https://github.com/chethu/Android-Architecture-Component
- https://github.com/chethu/Android-ViewModel
- https://github.com/chethu/Android-viewpager-with-viewmodel
- https://github.com/chethu/Android-Mediator-live-data-example
- https://github.com/chethu/Near-by-venus-browsing-sample-with-Android-Architecture-Components
