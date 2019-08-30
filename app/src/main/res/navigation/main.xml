@@ -5,7 +5,7 @@
 
     <fragment
             android:id="@+id/userDetailsFragment"
-            android:name="com.coroutine.sample.userdetails.UserDetailsFragment"
+            android:name="com.chethan.coroutinesample.userdetails.UserDetailsFragment"
             android:label="UserDetailsFragment">
 
     </fragment>

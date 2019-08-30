@@ -8,7 +8,7 @@
 
         <variable
             name="userDetail"
-            type="com.coroutine.sample.model.UserDetail" />
+            type="com.chethan.coroutinesample.model.UserDetail" />
     </data>
 
     <androidx.cardview.widget.CardView
