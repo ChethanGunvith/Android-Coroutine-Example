@@ -93,8 +93,6 @@ class MainFragment : Fragment(), CoroutineScope {
 
 ```
 
-#### There are severral ways to use launch coroutines 
-
 ##### launch + async (execute task)
 The parent coroutine is launched via the launch function with the Main dispatcher.
 The child coroutine is launched via the async function with the IO dispatcher.
