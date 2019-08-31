@@ -46,9 +46,9 @@ One can think of a coroutine as a light-weight thread. Like threads, coroutines 
 These are the functions to start the coroutine:
 
 - launch{}
- -  launch returns a Job and does not carry any resulting value
+  - launch returns a Job and does not carry any resulting value
 - async{}
- -  async returns a Deferred - a light-weight non-blocking future that represents a promise to provide a result later.
+  - async returns a Deferred - a light-weight non-blocking future that represents a promise to provide a result later.
  
  If the code inside the launch terminated with an exception, then it is treated like uncaught exceptions in a thread crashes Android applications. An uncaught exception inside the async code is stored inside the resulting Deferred and is not delivered anywhere else, it will get silently dropped unless processed.
 
@@ -189,7 +189,7 @@ fun loadData() = uiScope.launch {
 ```
 
 
-##### lifecycle aware coroutine scope
+##### Lifecycle aware coroutine scope
 With a release of android architecture components, we can create lifecycle aware coroutine scope which will cancel itself when Activity#onDestroy event occurs.
 
 ```kotlin
@@ -222,7 +222,7 @@ class MainFragment : Fragment() {
 ```
 
 
-Example of lifecycle aware coroutine scope for ViewModel
+##### Example of lifecycle aware coroutine scope for ViewModel
 
 ```kotlin
 
