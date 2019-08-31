@@ -50,87 +50,195 @@ These are the functions to start the coroutine:
  
  If the code inside the launch terminates with exception, then it is treated like uncaught exception in a thread crashes Android applications. An uncaught exception inside the async code is stored inside the resulting Deferred and is not delivered anywhere else, it will get silently dropped unless processed.
 
+#### Coroutine dispatcher
 
-In java, to block main thread, you say 
-Thread.sleep(2000L) // block main thread for 2 seconds
+To start any coroutine, you must provide dispatcher, dispatcher is nothing but indicating where you want to dispatch execution once task is completed. 
 
-In kotlin you write that as 
-runBlocking {         // but this expression blocks the main thread
-        delay(2000L)  // ... while we delay for 2 seconds to keep JVM alive
-} 
- 
- 
+there are two type dispatcher in Android . 
+
 ```kotlin
+// dispatches execution into Android main thread
+val uiDispatcher: CoroutineDispatcher = Dispatchers.Main
 
+// represent a pool of shared threads as coroutine dispatcher
+val bgDispatcher: CoroutineDispatcher = Dispatchers.I0
+```
 
+#### Coroutine scope
 
+To launch coroutine you need to provide its context on where it should lanuch, we have to two scopes to lanuch coroutines - CoroutineScope or use GlobalScope.
 
+```kotlin
+// GlobalScope example
+class MainFragment : Fragment() {
+    fun loadData() = GlobalScope.launch {  ...  }
+}
+// CoroutineScope example
+class MainFragment : Fragment() {
 
-fun main() {
-    GlobalScope.launch { // launch a new coroutine in background and continue
-        delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
-        println("World!") // print after delay
-    }
-    println("Hello,") // main thread continues while coroutine is delayed
-    Thread.sleep(2000L) // block main thread for 2 seconds to keep JVM alive
+    val uiScope = CoroutineScope(Dispatchers.Main)
+
+    fun loadData() = uiScope.launch {  ...  }
+}
+// Fragment implements CoroutineScope example
+class MainFragment : Fragment(), CoroutineScope {
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main
+
+    fun loadData() = launch {  ...  }
 }
 
-fun main() { 
-    GlobalScope.launch { // launch a new coroutine in background and continue
-        delay(1000L)
-        println("World!")
+```
+
+#### There are severral ways to use launch coroutines 
+
+##### launch + async (execute task)
+The parent coroutine is launched via the launch function with the Main dispatcher.
+The child coroutine is launched via the async function with the IO dispatcher.
+
+```kotlin
+val uiScope = CoroutineScope(Dispatchers.Main)
+fun loadData() = uiScope.launch {
+    view.showLoading() // ui thread
+    val task = async(bgDispatcher) { // background thread
+        // your blocking call
     }
-    println("Hello,") // main thread continues here immediately
-    runBlocking {     // but this expression blocks the main thread
-        delay(2000L)  // ... while we delay for 2 seconds to keep JVM alive
-    } 
+    val result = task.await()
+    view.showData(result) // ui thread
+}
+```
+
+Above code can also be rewritten with withContext 
+
+```kotlin
+val uiScope = CoroutineScope(Dispatchers.Main)
+fun loadData() = uiScope.launch {
+    view.showLoading() // ui thread
+    val result = withContext(bgDispatcher) { // background thread
+        // your blocking call
+    }
+    view.showData(result) // ui thread
+}
+```
+
+##### launch + withContext (execute two tasks sequentially)
+
+```kotlin
+val uiScope = CoroutineScope(Dispatchers.Main)
+fun loadData() = uiScope.launch {
+    view.showLoading() // ui thread
+
+    val result1 = withContext(bgDispatcher) { // background thread
+        // your blocking call
+    }
+
+    val result2 = withContext(bgDispatcher) { // background thread
+        // your blocking call
+    }
+    
+    val result = result1 + result2
+    
+    view.showData(result) // ui thread
+```
+
+
+##### launch + async + async (execute two tasks parallel)
+
+The parent coroutine is launched via the launch function with the Main dispatcher.
+The child coroutines are launched via the async function with the IO dispatcher.
+
+```kotlin
+val uiScope = CoroutineScope(Dispatchers.Main)
+fun loadData() = uiScope.launch {
+    view.showLoading() // ui thread
+
+    val task1 = async(bgDispatcher) { // background thread
+        // your blocking call
+    }
+
+    val task2 = async(bgDispatcher) { // background thread
+        // your blocking call
+    }
+
+    val result = task1.await() + task2.await()
+
+    view.showData(result) // ui thread
+}
+```
+
+##### launch a coroutine with a timeout - withTimeoutOrNull 
+
+withTimeoutOrNull function which will return null in case of timeout.
+
+```kotlin
+
+val uiScope = CoroutineScope(Dispatchers.Main)
+fun loadData() = uiScope.launch {
+    view.showLoading() // ui thread
+    val task = async(bgDispatcher) { // background thread
+        // your blocking call
+    }
+    // suspend until task is finished or return null in 2 sec
+    val result = withTimeoutOrNull(2000) { task.await() }
+    view.showData(result) // ui thread
 }
 
 ```
 
 
-In kotlin, you do asynchronous programming using Suspend function.  
+##### lifecycle aware coroutine scope
+With a release of android architecture components, we can create lifecycle aware coroutine scope which will cancel itself when Activity#onDestroy event occurs.
 
-Suspend : Suspend is our indication that this function is a asynchronous, it won't return immediatly it will suspend for a while and then it will return the actual result later on. 
+```kotlin
 
-Coroutine builder 
-Lanuch : it creates coroutine, it works on self in the background, just like starting background thread. what ever the logic inside curl braces will be working in some background thread pool. 
+class MainScope : CoroutineScope, LifecycleObserver {
 
-Every Lanuch comes with context, this is because you may have to tell where you want to return back once background task is done. hence every Lanuch has corresponding context . 
+    private val job = SupervisorJob()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
 
-lanuch(UI) { // This make sure that the execuation is dispatch on its UI thread.
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    fun destroy() = coroutineContext.cancelChildren()
+}
+// usage
+class MainFragment : Fragment() {
+    private val uiScope = MainScope()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        lifecycle.addObserver(mainScope)
+    }
+
+    private fun loadData() = uiScope.launch {
+        val result = withContext(bgDispatcher) {
+            // your blocking call
+        }
+    }
 }
 
-Lanuch is reqular function, it doesn't take suspend modifier on it. meaning that it doesn't wait for anything, it returns right away and it return with object called Job 
-
-Lanuch signature 
-
-```kotlin
-lanuch (context : coroutineContext = defultdispatcher,
-        block : Suspend() -> unit
-        ) : Job {..}
 ```
-        
-By the way, kotlin suspending functions are designed to imitate sequential behavior by default 
-        
-Async / Await() 
 
-Kotlin async function 
+
+Example of lifecycle aware coroutine scope for ViewModel
 
 ```kotlin
-fun loadImageAsync(name : String) : Deferred<Image> = async {...}
- 
- val deferred1 = loadImageAsync(name1)
- val deferred2 = loadImageAsync(name2)
- 
- val image1 = deferred1.await()
- val image2 = deferred2.await()
- 
- val result = combineImages (image1, image2)
- ```
- 
- 
 
+open class ScopedViewModel : ViewModel() {
+    private val job = SupervisorJob()
+    protected val uiScope = CoroutineScope(Dispatchers.Main + job)
+     override fun onCleared() {
+        super.onCleared()
+        uiScope.coroutineContext.cancelChildren()
+    }
+}
+// usage
+class MyViewModel : ScopedViewModel() {
 
-
+    private fun loadData() = uiScope.launch {
+        val result = withContext(bgDispatcher) {
+            // your blocking call
+        }
+    }
+}
+```
