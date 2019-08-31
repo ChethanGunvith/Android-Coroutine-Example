@@ -1,3 +1,5 @@
+#### Summary
+
 Let me start off with basic elements of thread, concurrency before I start with coroutine.
  
 We all know that Synchronous basically means that you can only execute one thing at a time. where as Asynchronous means that you can execute multiple things at a time and you don't have to finish executing the current thing in order to move on to next one.
@@ -34,7 +36,7 @@ Coroutine are light-weight threads. A light weight thread means it doesn’t map
 Kotlin implements stackless coroutines — it means that the coroutines don’t have own stack, so they don’t map on native thread.
 
 
-#### what the official website of Kotlin says
+#### What the official website of Kotlin says
 One can think of a coroutine as a light-weight thread. Like threads, coroutines can run in parallel, wait for each other and communicate. The biggest difference is that coroutines are very cheap, almost free: we can create thousands of them, and pay very little in terms of performance. True threads, on the other hand, are expensive to start and keep around. A thousand threads can be a serious challenge for a modern machine.
 
 
