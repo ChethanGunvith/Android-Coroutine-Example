@@ -25,11 +25,30 @@ waiting threads don't allow scalling, threads are expensive, task waiting for IO
 To overcome this problem, there are many framework created these days, one such is reactive programming (RxJava), Java fibers. it will help us uisng your cpu efficently and only using limited number of threads. 
 
 
- What we ideally got from these framworks is a concept of where we have very light weight threads which do not consumes lot of memory. the way it works is , when you submitted particular task to this light weight thread, thread will be executing until it reaches any blocking operation like IO operation or network operation or database operation. On its block, light weight thread will be unmount task from the tread, instead of keeping it in wait, it simple take out task from the thread. while taking out, it will save the current state of the task. any local variables and stack of the task saved sepeartly during this unmount. in this way light weighted thread will be avaialble to up other task once it is blocked. task will be mounted back to thread when it is done with operation, by that time task will be not assigned to same thread which is unmounted, it may chose to any other available thread to perform. These task is called coroutines OR in java it is called java fibers
+What we ideally got from these framworks is a concept of where we have very light weight threads which do not consumes lot of memory. the way it works is , when you submitted particular task to this light weight thread, thread will be executing until it reaches any blocking operation like IO operation or network operation or database operation. On its block, light weight thread will be unmount task from the tread, instead of keeping it in wait, it simple take out task from the thread. while taking out, it will save the current state of the task. any local variables and stack of the task saved sepeartly during this unmount. in this way light weighted thread will be avaialble to up other task once it is blocked. task will be mounted back to thread when it is done with operation, by that time task will be not assigned to same thread which is unmounted, it may chose to any other available thread to perform. These task is called coroutines OR in java it is called java fibers
  
  Task is called Coroutines here. 
  
- Coroutines are light-weight threads. They are launched with launch coroutine builder in a context of some CoroutineScope.
+Coroutine are light-weight threads. A light weight thread means it doesn’t map on native thread, so it doesn’t require context switching on processor, so they are faster.
+
+Kotlin implements stackless coroutines — it’s mean that the coroutines don’t have own stack, so they don’t map on native thread.
+
+
+#### what the official website of Kotlin says
+One can think of a coroutine as a light-weight thread. Like threads, coroutines can run in parallel, wait for each other and communicate. The biggest difference is that coroutines are very cheap, almost free: we can create thousands of them, and pay very little in terms of performance. True threads, on the other hand, are expensive to start and keep around. A thousand threads can be a serious challenge for a modern machine.
+
+
+
+##### Let’s see how we can use the Coroutines.
+
+These are the functions to start the coroutine:
+
+- launch{}
+ -  launch returns a Job and does not carry any resulting value
+- async{}
+ -  async returns a Deferred - a light-weight non-blocking future that represents a promise to provide a result later.
+ 
+ If the code inside the launch terminates with exception, then it is treated like uncaught exception in a thread crashes Android applications. An uncaught exception inside the async code is stored inside the resulting Deferred and is not delivered anywhere else, it will get silently dropped unless processed.
 
 
 In java, to block main thread, you say 
